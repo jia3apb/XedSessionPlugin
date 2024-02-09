@@ -1,0 +1,11 @@
+[Plugin]
+Loader=python3
+Module=sessionplugin
+IAge=2
+Name=SessionPlugin
+Version=v0.0.1
+Description=Restore sessions
+Comment=Restore sessions
+Icon=system-software-install
+Authors=JIa3apb
+Copyright=Copyright © 2024 JIa3aPb
