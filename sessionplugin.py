@@ -23,7 +23,7 @@
 
 import gi
 gi.require_version('Xed', '1.0')
-from gi.repository import GObject, Xed, Gio, GtkSource, Gtk
+from gi.repository import GObject, Xed, Gio, GtkSource
 import os
 import json
 import hashlib
@@ -129,7 +129,7 @@ class SessionPlugin(GObject.Object, Xed.WindowActivatable):
     def close_test(self, notebook, tab):
         print("tab close request")
         pass
-    
+
     def generate_unique_filename(self,uri):
         # Generate a unique identifier for the temporary file
         hash_object = hashlib.sha256(uri.encode())
