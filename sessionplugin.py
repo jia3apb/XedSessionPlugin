@@ -1,12 +1,30 @@
-# mysessionplugin.py
+# -*- coding: utf-8 -*-
+#
+#  sessionplugin.py (v1.1)
+#    ~ imitates notepad++ session save/restore behaviour
+#
+#  Copyright (C) 2024 - jia3apb
+
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330,
+#  Boston, MA 02111-1307, USA.
+
 
 import gi
 gi.require_version('Xed', '1.0')
 from gi.repository import GObject, Xed, Gio, GtkSource, Gtk
 import os
-import threading
-import time
-import uuid
 import json
 import hashlib
 from pprint import pprint
@@ -111,11 +129,7 @@ class SessionPlugin(GObject.Object, Xed.WindowActivatable):
     def close_test(self, notebook, tab):
         print("tab close request")
         pass
-
-    def popup_test(self):
-        print("popup menu")
-        pass
-
+    
     def generate_unique_filename(self,uri):
         # Generate a unique identifier for the temporary file
         hash_object = hashlib.sha256(uri.encode())
@@ -154,10 +168,7 @@ class SessionPlugin(GObject.Object, Xed.WindowActivatable):
                         if os.path.exists(file_location):
                             file = Gio.File.new_for_path(file_location)
                             tab = self.window.create_tab_from_location(file, encoding, 0, True, True)
-
-    def automatic_save(self):
-        print("saving")
-        
+       
     def save_document(self, doc, file_path):
         text = doc.get_text(doc.get_start_iter(), doc.get_end_iter(), True)
         with open(file_path, "w") as f:
