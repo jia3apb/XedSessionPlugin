@@ -43,7 +43,7 @@ class SessionPlugin(GObject.Object, Xed.WindowActivatable):
             os.makedirs(self.temp_dir)
         self.temp_files = set()
         self.session_files = {}
-        self.session_file = os.path.expanduser("/home/dm/.xed_session")
+        self.session_file = os.path.expanduser("~/.xed_session")
         
 
     def do_activate(self):
