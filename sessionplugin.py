@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#  sessionplugin.py (v1.1)
+#  sessionplugin.py (v0.0.1)
 #    ~ imitates notepad++ session save/restore behaviour
 #
 #  Copyright (C) 2024 - jia3apb
@@ -23,7 +23,7 @@
 
 import gi
 gi.require_version('Xed', '1.0')
-from gi.repository import GObject, Xed, Gio, GtkSource
+from gi.repository import GObject, Xed, Gio, GtkSource, Gtk
 import os
 import json
 import hashlib
@@ -59,7 +59,33 @@ class SessionPlugin(GObject.Object, Xed.WindowActivatable):
     def connect_signals(self):
         # Connect signal to handle events
         self.window.connect("delete-event", self.on_window_delete_event)
-        self.window.get_child().get_children()[0].get_children()[2].get_children()[1].get_children()[0].connect("tab-close-request", self.close_test)
+        notebook = self.get_notebook(self.window)
+        if notebook: notebook.connect("tab-close-request", self.close_test)
+
+
+    def get_notebook(self, window):
+        notebook = False
+        gtk_overlay = window.get_child()
+        if isinstance(gtk_overlay, Gtk.Overlay):
+            gtk_overlay_children = gtk_overlay.get_children()
+            if len(gtk_overlay_children) > 0:
+                gtk_box = gtk_overlay_children[0]
+                if isinstance(gtk_box, Gtk.Box):
+                    gtk_box_children = gtk_box.get_children()
+                    if len(gtk_box_children) > 2:
+                        xedpaned = gtk_box_children[2]
+                        if str(type(xedpaned)) == "<class '__gi__.XedPaned'>":
+                            xedpaned_children = xedpaned.get_children()
+                            if len(xedpaned_children) > 1:
+                                sub_xedpaned = xedpaned_children[1]
+                                if str(type(sub_xedpaned)) == "<class '__gi__.XedPaned'>":
+                                    sub_xedpaned_children = sub_xedpaned.get_children()
+                                    if len(sub_xedpaned_children) > 0:
+                                        notebook_result = sub_xedpaned_children[0]
+                                        if isinstance(notebook_result, Xed.Notebook):
+                                            notebook = notebook_result
+        return notebook
+
 
     def on_window_delete_event(self, window, event):
         print("Delete event")
@@ -77,42 +103,45 @@ class SessionPlugin(GObject.Object, Xed.WindowActivatable):
                 }
                 self.save_document(unsaved_doc, temp_file_path)
 
-        for tb in self.window.get_child().get_children()[0].get_children()[2].get_children()[1].get_children()[0].get_children():
-            doc = tb.get_document()
-            temp_file_path = os.path.join(self.temp_dir, self.generate_unique_filename(doc.get_uri_for_display()) + ".tmp")
-            if not doc.get_uri_for_display() in self.session_files:
-                path = doc.get_location().get_path() if doc.get_location() else None
 
-                if path:
-                    self.session_files[doc.get_uri_for_display()] = {
-                        "temp_location": temp_file_path,
-                        "file_location": path,
-                        "short_name": doc.get_short_name_for_display(),
-                        "saved": True
-                    }
+        notebook = self.get_notebook(self.window)
+        if notebook:
+            for tb in notebook.get_children():
+                doc = tb.get_document()
+                temp_file_path = os.path.join(self.temp_dir, self.generate_unique_filename(doc.get_uri_for_display()) + ".tmp")
+                if not doc.get_uri_for_display() in self.session_files:
+                    path = doc.get_location().get_path() if doc.get_location() else None
+
+                    if path:
+                        self.session_files[doc.get_uri_for_display()] = {
+                            "temp_location": temp_file_path,
+                            "file_location": path,
+                            "short_name": doc.get_short_name_for_display(),
+                            "saved": True
+                        }
+                
+                        self.save_document(doc, temp_file_path)
+
+            temporary_files = {}
+            for long_name, values in self.session_files.items():
+                temporary_files[values["temp_location"]] = {
+                    "long_name": long_name,
+                    "file_location": values["file_location"],
+                    "short_name": values["short_name"],
+                    "saved": values["saved"]
+                }
+
+            for filename in os.listdir(self.temp_dir):
+                file_path = os.path.join(self.temp_dir, filename)
+                if not file_path in temporary_files:
+                    os.remove(file_path)
+
+            self.save_session()
             
-                    self.save_document(doc, temp_file_path)
+            for tb in notebook.get_children():
+                tb.get_view().destroy()
 
-        temporary_files = {}
-        for long_name, values in self.session_files.items():
-            temporary_files[values["temp_location"]] = {
-                "long_name": long_name,
-                "file_location": values["file_location"],
-                "short_name": values["short_name"],
-                "saved": values["saved"]
-            }
-
-        for filename in os.listdir(self.temp_dir):
-            file_path = os.path.join(self.temp_dir, filename)
-            if not file_path in temporary_files:
-                os.remove(file_path)
-
-        self.save_session()
-        
-        for tb in window.get_child().get_children()[0].get_children()[2].get_children()[1].get_children()[0].get_children():
-            tb.get_view().destroy()
-
-        Xed.Window.close(window)
+            Xed.Window.close(window)
 
     def save_session(self):
         with open(self.session_file, "w") as json_file:
