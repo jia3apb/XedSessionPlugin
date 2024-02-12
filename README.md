@@ -1,4 +1,4 @@
-# XedSessionPlugin
+# Xed session plugin
 
 
 The plugin imitates notepad++ session save/restore behaviour
